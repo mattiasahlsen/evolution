@@ -158,7 +158,7 @@ export class UI {
       this.addSlider(
         'Death Rate',
         config.defaultStats.deathRate,
-        0,
+        0.005,
         1,
         0.005,
         (v) => {

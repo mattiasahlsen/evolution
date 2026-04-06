@@ -91,7 +91,7 @@ class OrganismImpl implements Organism {
           ),
           deathRate: clamp(
             this.stats.deathRate + gaussianRandom(rng) * mutationSigma,
-            0,
+            0.005,
             1,
           ),
           mutationRate: clamp(

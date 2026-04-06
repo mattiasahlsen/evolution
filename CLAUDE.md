@@ -1,1 +1,2 @@
 - Run `pnpm verify` to check tsc build and run tests
+- To update snapshots, run `pnpm test -u`
