@@ -24,21 +24,22 @@ export interface Organism {
 
   toSnapshot(): OrganismSnapshot
 }
+interface OrganismBuildParams {
+  id: number
+  x: number
+  y: number
+  heading: number
+  stats: Stats
+}
 
-export class BaseOrganism implements Organism {
+class OrganismImpl implements Organism {
   private readonly id: number
   private x: number
   private y: number
   private heading: number
   private readonly stats: Stats
 
-  constructor(options: {
-    id: number
-    x: number
-    y: number
-    heading: number
-    stats: Stats
-  }) {
+  constructor(options: OrganismBuildParams) {
     this.id = options.id
     this.x = options.x
     this.y = options.y
@@ -106,7 +107,7 @@ export class BaseOrganism implements Organism {
         }
       : { ...this.stats }
 
-    return new BaseOrganism({
+    return new OrganismImpl({
       id,
       x: this.x,
       y: this.y,
@@ -124,4 +125,8 @@ export class BaseOrganism implements Organism {
       stats: { ...this.stats },
     }
   }
+}
+
+export function createOrganism(options: OrganismBuildParams): Organism {
+  return new OrganismImpl(options)
 }

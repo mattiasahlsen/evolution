@@ -1,5 +1,5 @@
 import type { RNG } from '../rng'
-import { BaseOrganism, type Organism } from './organism'
+import { type Organism, createOrganism } from './organism'
 import type { OrganismSnapshot } from './snapshot'
 import type { Stats } from './stats'
 
@@ -11,18 +11,23 @@ export interface OrganismFactory {
   restoreCounter(value: number): void
 }
 
-export class OrganismFactory implements OrganismFactory {
+interface OrganismFactoryBuildParams {
+  mutationSigma?: number
+  speedScale?: number
+}
+
+class OrganismFactoryImpl implements OrganismFactory {
   private nextId = 0
   private mutationSigma: number
   private speedScale: number
 
-  constructor(config?: { mutationSigma?: number; speedScale?: number }) {
+  constructor(config?: OrganismFactoryBuildParams) {
     this.mutationSigma = config?.mutationSigma ?? 0.02
     this.speedScale = config?.speedScale ?? 50
   }
 
   create(x: number, y: number, stats: Stats, heading: number): Organism {
-    return new BaseOrganism({
+    return createOrganism({
       id: this.nextId++,
       x,
       y,
@@ -41,7 +46,7 @@ export class OrganismFactory implements OrganismFactory {
   }
 
   fromSnapshot(snap: OrganismSnapshot): Organism {
-    return new BaseOrganism({
+    return createOrganism({
       id: snap.id,
       x: snap.x,
       y: snap.y,
@@ -57,4 +62,10 @@ export class OrganismFactory implements OrganismFactory {
   restoreCounter(value: number): void {
     this.nextId = value
   }
+}
+
+export function createOrganismFactory(
+  config?: OrganismFactoryBuildParams,
+): OrganismFactory {
+  return new OrganismFactoryImpl(config)
 }

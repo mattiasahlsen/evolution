@@ -1,4 +1,4 @@
-import { OrganismFactory } from '../organism/factory'
+import { createOrganismFactory } from '../organism/factory'
 import type { Organism } from '../organism/organism'
 import type { OrganismSnapshot } from '../organism/snapshot'
 import { Mulberry32 } from '../rng'
@@ -21,7 +21,7 @@ export class Simulation {
   private tickCount = 0
   private seed: number
   private rng: Mulberry32
-  private organismFactory = new OrganismFactory()
+  private organismFactory = createOrganismFactory()
   private checkpoints = new Map<number, SimulationSnapshot>()
   private readonly checkpointInterval = 60
 
@@ -187,12 +187,6 @@ export class Simulation {
           ((newYRaw % this.config.height) + this.config.height) %
           this.config.height,
       })
-      // organism.x += Math.cos(organism.heading) * organism.stats.speed
-      // organism.y += Math.sin(organism.heading) * organism.stats.speed
-      // Toroidal wrap
-      // organism.x = ((organism.x % this.config.width) + this.config.width) % this.config.width
-      // organism.y =
-      //   ((organism.y % this.config.height) + this.config.height) % this.config.height
     }
   }
 }

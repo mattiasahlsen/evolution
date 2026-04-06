@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { OrganismFactory } from './factory'
+import { createOrganismFactory } from './factory'
 import { statsToColor, type Stats } from './stats'
 
 describe('statsToColor', () => {
@@ -57,7 +57,7 @@ describe('statsToColor', () => {
 
 describe('createOrganismFactory', () => {
   it('should create an organism with incrementing IDs', () => {
-    const factory = new OrganismFactory()
+    const factory = createOrganismFactory()
     const stats: Stats = {
       replicationRate: 0.1,
       deathRate: 0.05,
@@ -73,7 +73,7 @@ describe('createOrganismFactory', () => {
   })
 
   it('should create organism with correct position and heading', () => {
-    const factory = new OrganismFactory()
+    const factory = createOrganismFactory()
     const stats: Stats = {
       replicationRate: 0.1,
       deathRate: 0.05,
@@ -90,7 +90,7 @@ describe('createOrganismFactory', () => {
   })
 
   it('should copy stats on creation', () => {
-    const factory = new OrganismFactory()
+    const factory = createOrganismFactory()
     const stats: Stats = {
       replicationRate: 0.1,
       deathRate: 0.05,
@@ -105,7 +105,7 @@ describe('createOrganismFactory', () => {
   })
 
   it('should replicate without mutation when rng is high', () => {
-    const factory = new OrganismFactory()
+    const factory = createOrganismFactory()
     const stats: Stats = {
       replicationRate: 0.5,
       deathRate: 0.1,
@@ -137,7 +137,7 @@ describe('createOrganismFactory', () => {
   })
 
   it('should replicate with mutation when rng is low', () => {
-    const factory = new OrganismFactory()
+    const factory = createOrganismFactory()
     const stats: Stats = {
       replicationRate: 0.5,
       deathRate: 0.1,
@@ -166,7 +166,7 @@ describe('createOrganismFactory', () => {
   })
 
   it('should keep stats within valid bounds after mutation', () => {
-    const factory = new OrganismFactory({
+    const factory = createOrganismFactory({
       mutationSigma: 10,
       speedScale: 100,
     })
@@ -198,7 +198,7 @@ describe('createOrganismFactory', () => {
   })
 
   it('should snapshot and restore organisms', () => {
-    const factory = new OrganismFactory()
+    const factory = createOrganismFactory()
     const stats: Stats = {
       replicationRate: 0.1,
       deathRate: 0.05,
@@ -218,7 +218,7 @@ describe('createOrganismFactory', () => {
   })
 
   it('should handle counter save and restore', () => {
-    const factory = new OrganismFactory()
+    const factory = createOrganismFactory()
     const stats: Stats = {
       replicationRate: 0.1,
       deathRate: 0.05,
@@ -242,7 +242,7 @@ describe('createOrganismFactory', () => {
   })
 
   it('should respect custom configuration', () => {
-    const factory = new OrganismFactory({
+    const factory = createOrganismFactory({
       mutationSigma: 0.1,
       speedScale: 100,
     })
