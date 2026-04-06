@@ -1,0 +1,111 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0f0f1a;
+  color: #e0e0e0;
+  overflow: hidden;
+  height: 100vh;
+}
+
+#app {
+  display: flex;
+  height: 100vh;
+}
+
+.controls-panel {
+  width: 260px;
+  min-width: 260px;
+  background: #16162a;
+  padding: 16px;
+  overflow-y: auto;
+  border-right: 1px solid #2a2a4a;
+}
+
+.controls-panel h2 {
+  font-size: 18px;
+  margin-bottom: 12px;
+  color: #a0a0ff;
+}
+
+.controls-panel h3 {
+  font-size: 14px;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  color: #8080cc;
+}
+
+.stat-display {
+  font-size: 14px;
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  background: #1e1e3a;
+  border-radius: 4px;
+}
+
+.control-group {
+  margin-bottom: 12px;
+}
+
+.control-group label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: #b0b0cc;
+}
+
+.slider-value {
+  float: right;
+  color: #80c0ff;
+  font-weight: 600;
+}
+
+.control-group input[type='range'] {
+  width: 100%;
+  accent-color: #6060cc;
+}
+
+.btn-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.btn-row button {
+  flex: 1;
+  min-width: 50px;
+  padding: 6px 8px;
+  font-size: 12px;
+  border: 1px solid #3a3a6a;
+  background: #22224a;
+  color: #c0c0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-row button:hover {
+  background: #33336a;
+}
+
+#sim-canvas {
+  flex: 1;
+  display: block;
+}
+
+.tooltip {
+  position: fixed;
+  background: #1e1e3aee;
+  border: 1px solid #4040aa;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  pointer-events: none;
+  z-index: 100;
+  color: #d0d0ff;
+}
