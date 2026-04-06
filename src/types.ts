@@ -1,9 +1,4 @@
-export interface ReplicatorStats {
-  replicationRate: number // 0–1, chance per tick to replicate
-  deathRate: number // 0–1, chance per tick to die
-  mutationRate: number // 0–1, fraction of replications that mutate
-  speed: number // 0–5, pixels per tick
-}
+import type { Stats } from './organism'
 
 export interface SimConfig {
   width: number
@@ -11,7 +6,7 @@ export interface SimConfig {
   spawnRate: number // 0–1, chance per tick to spawn a new replicator
   populationCap: number
   ticksPerFrame: number
-  defaultStats: ReplicatorStats
+  defaultStats: Stats
 }
 
 export const DEFAULT_CONFIG: SimConfig = {
