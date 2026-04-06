@@ -1,172 +1,163 @@
-import { Replicator, getNextId, setNextId } from './replicator';
-import { Mulberry32 } from './rng';
-import type { SimConfig } from './types';
-import type { SimulationSnapshot } from './snapshot';
+import { createOrganismFactory } from './organism'
+import type { Organism, OrganismSnapshot } from './organism'
+import { Mulberry32 } from './rng'
+import type { SimConfig } from './types'
 
-const MUTATION_SIGMA = 0.02;
-const SPAWN_OFFSET = 15;
-const HEADING_DRIFT = 0.3; // max radians per tick
+const SPAWN_OFFSET = 15
+const HEADING_DRIFT = 0.3 // max radians per tick
 
-function gaussianRandom(rng: Mulberry32): number {
-  // Box-Muller transform
-  const u1 = rng.next();
-  const u2 = rng.next();
-  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
+interface SimulationSnapshot {
+  tickCount: number
+  rngState: number
+  nextOrganismId: number
+  organisms: OrganismSnapshot[]
 }
 
 export class Simulation {
-  replicators: Replicator[] = [];
-  config: SimConfig;
-  tickCount = 0;
-  seed: number;
-  rng: Mulberry32;
-  private checkpoints = new Map<number, SimulationSnapshot>();
-  private readonly checkpointInterval = 60;
+  replicators: Organism[] = []
+  config: SimConfig
+  tickCount = 0
+  seed: number
+  rng: Mulberry32
+  private organisms = createOrganismFactory()
+  private checkpoints = new Map<number, SimulationSnapshot>()
+  private readonly checkpointInterval = 60
 
   constructor(config: SimConfig) {
-    this.config = config;
-    this.seed = (Math.random() * 0xffffffff) >>> 0;
-    this.rng = new Mulberry32(this.seed);
+    this.config = config
+    this.seed = (Math.random() * 0xffffffff) >>> 0
+    this.rng = new Mulberry32(this.seed)
   }
 
   tick(): void {
-    this.tickCount++;
-    this.executeTick();
+    this.tickCount++
+    this.executeTick()
     if (this.tickCount % this.checkpointInterval === 0) {
-      this.checkpoints.set(this.tickCount, this.takeSnapshot());
+      this.checkpoints.set(this.tickCount, this.takeSnapshot())
     }
   }
 
   private executeTick(): void {
-    this.spawn();
-    this.replicateAndMutate();
-    this.kill();
-    this.move();
+    this.spawn()
+    this.replicateAndMutate()
+    this.kill()
+    this.move()
   }
 
   takeSnapshot(): SimulationSnapshot {
     return {
       tickCount: this.tickCount,
       rngState: this.rng.state,
-      nextReplicatorId: getNextId(),
-      replicators: this.replicators.map((r) => r.toSnapshot()),
-    };
+      nextOrganismId: this.organisms.saveCounter(),
+      organisms: this.replicators.map((r) => this.organisms.toSnapshot(r)),
+    }
   }
 
   restoreSnapshot(snap: SimulationSnapshot): void {
-    this.tickCount = snap.tickCount;
-    this.rng = Mulberry32.fromState(snap.rngState);
-    setNextId(snap.nextReplicatorId);
-    this.replicators = snap.replicators.map((s) => Replicator.fromSnapshot(s));
+    this.tickCount = snap.tickCount
+    this.rng = Mulberry32.fromState(snap.rngState)
+    this.organisms.restoreCounter(snap.nextOrganismId)
+    this.replicators = snap.organisms.map((s) => this.organisms.fromSnapshot(s))
   }
 
   storeInitialCheckpoint(): void {
     if (!this.checkpoints.has(0)) {
-      this.checkpoints.set(0, this.takeSnapshot());
+      this.checkpoints.set(0, this.takeSnapshot())
     }
   }
 
   hasCheckpoint(tick: number): boolean {
-    return this.checkpoints.has(tick);
+    return this.checkpoints.has(tick)
   }
 
   seekToTick(target: number): void {
-    if (target < 0) return;
+    if (target < 0) return
 
     // Find nearest checkpoint at or before target
-    let bestTick = 0;
+    let bestTick = 0
     for (const tick of this.checkpoints.keys()) {
       if (tick <= target && tick > bestTick) {
-        bestTick = tick;
+        bestTick = tick
       }
     }
 
-    const checkpoint = this.checkpoints.get(bestTick);
+    const checkpoint = this.checkpoints.get(bestTick)
     if (checkpoint) {
-      this.restoreSnapshot(checkpoint);
+      this.restoreSnapshot(checkpoint)
     }
 
     // Replay forward from checkpoint to target
     while (this.tickCount < target) {
-      this.tickCount++;
-      this.executeTick();
+      this.tickCount++
+      this.executeTick()
     }
   }
 
   reset(): void {
-    this.replicators = [];
-    this.tickCount = 0;
-    this.checkpoints.clear();
-    this.seed = (Math.random() * 0xffffffff) >>> 0;
-    this.rng = new Mulberry32(this.seed);
-    setNextId(0);
+    this.replicators = []
+    this.tickCount = 0
+    this.checkpoints.clear()
+    this.seed = (Math.random() * 0xffffffff) >>> 0
+    this.rng = new Mulberry32(this.seed)
+    this.organisms.restoreCounter(0)
   }
 
   private spawn(): void {
-    if (this.replicators.length >= this.config.populationCap) return;
+    if (this.replicators.length >= this.config.populationCap) return
     if (this.rng.next() < this.config.spawnRate) {
-      const x = this.rng.next() * this.config.width;
-      const y = this.rng.next() * this.config.height;
-      const heading = this.rng.next() * Math.PI * 2;
+      const x = this.rng.next() * this.config.width
+      const y = this.rng.next() * this.config.height
+      const heading = this.rng.next() * Math.PI * 2
       this.replicators.push(
-        new Replicator(x, y, this.config.defaultStats, heading),
-      );
+        this.organisms.create(x, y, this.config.defaultStats, heading),
+      )
     }
   }
 
   private replicateAndMutate(): void {
-    const offspring: Replicator[] = [];
+    const offspring: Organism[] = []
     for (const parent of this.replicators) {
-      if (this.replicators.length + offspring.length >= this.config.populationCap) break;
+      if (this.replicators.length + offspring.length >= this.config.populationCap) break
       if (this.rng.next() < parent.stats.replicationRate) {
-        const isMutation = this.rng.next() < parent.stats.mutationRate;
-        const angle = this.rng.next() * Math.PI * 2;
-        const dist = SPAWN_OFFSET + this.rng.next() * SPAWN_OFFSET;
-        let childX = parent.x + Math.cos(angle) * dist;
-        let childY = parent.y + Math.sin(angle) * dist;
+        // Position RNG calls must happen before replicate() to preserve sequence
+        const angle = this.rng.next() * Math.PI * 2
+        const dist = SPAWN_OFFSET + this.rng.next() * SPAWN_OFFSET
+        let childX = parent.x + Math.cos(angle) * dist
+        let childY = parent.y + Math.sin(angle) * dist
         // Toroidal wrap
-        childX = ((childX % this.config.width) + this.config.width) % this.config.width;
-        childY = ((childY % this.config.height) + this.config.height) % this.config.height;
+        childX = ((childX % this.config.width) + this.config.width) % this.config.width
+        childY = ((childY % this.config.height) + this.config.height) % this.config.height
 
-        let childStats = { ...parent.stats };
+        // replicate() consumes: rng.next() for isMutation, then 8× if mutating
+        const child = this.organisms.replicate(parent, this.rng)
 
-        if (isMutation) {
-          childStats = {
-            replicationRate: clamp(parent.stats.replicationRate + gaussianRandom(this.rng) * MUTATION_SIGMA, 0, 1),
-            deathRate: clamp(parent.stats.deathRate + gaussianRandom(this.rng) * MUTATION_SIGMA, 0, 1),
-            mutationRate: clamp(parent.stats.mutationRate + gaussianRandom(this.rng) * MUTATION_SIGMA, 0, 1),
-            speed: clamp(parent.stats.speed + gaussianRandom(this.rng) * MUTATION_SIGMA * 50, 0, 5),
-          };
-        }
-
-        const heading = this.rng.next() * Math.PI * 2;
-        offspring.push(new Replicator(childX, childY, childStats, heading));
+        // Heading RNG call stays after replicate() to preserve sequence
+        const heading = this.rng.next() * Math.PI * 2
+        child.x = childX
+        child.y = childY
+        child.heading = heading
+        offspring.push(child)
       }
     }
-    this.replicators.push(...offspring);
+    this.replicators.push(...offspring)
   }
 
   private kill(): void {
     this.replicators = this.replicators.filter(
       (r) => this.rng.next() >= r.stats.deathRate,
-    );
+    )
   }
 
   private move(): void {
     for (const r of this.replicators) {
       // Drift heading
-      r.heading += (this.rng.next() - 0.5) * HEADING_DRIFT * 2;
+      r.heading += (this.rng.next() - 0.5) * HEADING_DRIFT * 2
       // Move
-      r.x += Math.cos(r.heading) * r.stats.speed;
-      r.y += Math.sin(r.heading) * r.stats.speed;
+      r.x += Math.cos(r.heading) * r.stats.speed
+      r.y += Math.sin(r.heading) * r.stats.speed
       // Toroidal wrap
-      r.x = ((r.x % this.config.width) + this.config.width) % this.config.width;
-      r.y = ((r.y % this.config.height) + this.config.height) % this.config.height;
+      r.x = ((r.x % this.config.width) + this.config.width) % this.config.width
+      r.y = ((r.y % this.config.height) + this.config.height) % this.config.height
     }
   }
 }
-

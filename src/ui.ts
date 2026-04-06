@@ -1,5 +1,6 @@
 import type { SimConfig } from './types';
-import type { Replicator } from './replicator';
+import type { Organism } from './organism';
+import { statsToColor } from './organism';
 
 export interface UICallbacks {
   onPlay: () => void;
@@ -230,7 +231,7 @@ export class UI {
     this.tickCounter.textContent = `Tick: ${tick}`;
   }
 
-  showTooltip(r: Replicator, screenX: number, screenY: number): void {
+  showTooltip(r: Organism, screenX: number, screenY: number): void {
     this.tooltip.style.display = 'block';
     this.tooltip.style.left = `${screenX + 15}px`;
     this.tooltip.style.top = `${screenY + 15}px`;
@@ -240,7 +241,7 @@ export class UI {
       Death: ${r.stats.deathRate.toFixed(4)}<br>
       Mutation: ${r.stats.mutationRate.toFixed(4)}<br>
       Speed: ${r.stats.speed.toFixed(2)}<br>
-      Color: <span style="color:${r.color}">&#9679;</span> ${r.color}
+      Color: <span style="color:${statsToColor(r.stats)}">&#9679;</span> ${statsToColor(r.stats)}
     `;
   }
 

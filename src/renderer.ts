@@ -1,4 +1,5 @@
-import type { Replicator } from './replicator';
+import type { Organism } from './organism';
+import { statsToColor } from './organism';
 import { getSpriteForColor, SPRITE_SIZE } from './sprite';
 
 export class Renderer {
@@ -15,7 +16,7 @@ export class Renderer {
     this.canvas.height = height;
   }
 
-  render(replicators: Replicator[]): void {
+  render(replicators: Organism[]): void {
     const { ctx } = this;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -25,7 +26,7 @@ export class Renderer {
 
     const half = SPRITE_SIZE / 2;
     for (const r of replicators) {
-      const sprite = getSpriteForColor(r.color);
+      const sprite = getSpriteForColor(statsToColor(r.stats));
       ctx.drawImage(sprite, r.x - half, r.y - half, SPRITE_SIZE, SPRITE_SIZE);
     }
   }
@@ -33,8 +34,8 @@ export class Renderer {
   findReplicatorAt(
     x: number,
     y: number,
-    replicators: Replicator[],
-  ): Replicator | null {
+    replicators: Organism[],
+  ): Organism | null {
     const half = SPRITE_SIZE / 2;
     // Search in reverse so topmost (last drawn) is found first
     for (let i = replicators.length - 1; i >= 0; i--) {
