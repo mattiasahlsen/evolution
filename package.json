@@ -7,7 +7,7 @@
     "verify": "pnpm build:check && pnpm test",
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:gh-pages": "tsc && vite build --outDir gh-pages --base=/evolution/",
+    "build:gh-pages": "tsc && vite build --outDir docs --base=/evolution/",
     "build:check": "tsc --noEmit",
     "verify:types": "tsc --noEmit",
     "preview": "vite preview",
