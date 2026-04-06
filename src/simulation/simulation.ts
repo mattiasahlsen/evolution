@@ -1,7 +1,8 @@
-import { createOrganismFactory } from '../organism'
-import type { Organism, OrganismSnapshot } from '../organism'
+import { OrganismFactory } from '../organism/factory'
+import type { Organism } from '../organism/organism'
+import type { OrganismSnapshot } from '../organism/snapshot'
 import { Mulberry32 } from '../rng'
-import type { SimConfig } from '../config'
+import type { SimConfig } from './config'
 
 const SPAWN_OFFSET = 15
 const HEADING_DRIFT = 0.3 // max radians per tick
@@ -10,17 +11,17 @@ interface SimulationSnapshot {
   tickCount: number
   rngState: number
   nextOrganismId: number
-  organisms: OrganismSnapshot[]
+  organismSnapshots: OrganismSnapshot[]
 }
 
 export class Simulation {
   private readonly config: SimConfig
 
-  private replicators: Organism[] = []
+  private organisms: Organism[] = []
   private tickCount = 0
   private seed: number
   private rng: Mulberry32
-  private organisms = createOrganismFactory()
+  private organismFactory = new OrganismFactory()
   private checkpoints = new Map<number, SimulationSnapshot>()
   private readonly checkpointInterval = 60
 
@@ -42,8 +43,10 @@ export class Simulation {
     return {
       tickCount: this.tickCount,
       rngState: this.rng.state,
-      nextOrganismId: this.organisms.saveCounter(),
-      organisms: this.replicators.map((r) => this.organisms.toSnapshot(r)),
+      nextOrganismId: this.organismFactory.saveCounter(),
+      organismSnapshots: this.organisms.map((organism) =>
+        organism.toSnapshot(),
+      ),
     }
   }
 
@@ -81,16 +84,16 @@ export class Simulation {
   }
 
   reset(): void {
-    this.replicators = []
+    this.organisms = []
     this.tickCount = 0
     this.checkpoints.clear()
     this.seed = (Math.random() * 0xffffffff) >>> 0
     this.rng = new Mulberry32(this.seed)
-    this.organisms.restoreCounter(0)
+    this.organismFactory.restoreCounter(0)
   }
 
   getReplicators(): Organism[] {
-    return this.replicators
+    return this.organisms
   }
 
   getTickCount(): number {
@@ -107,29 +110,28 @@ export class Simulation {
   private restoreSnapshot(snap: SimulationSnapshot): void {
     this.tickCount = snap.tickCount
     this.rng = Mulberry32.fromState(snap.rngState)
-    this.organisms.restoreCounter(snap.nextOrganismId)
-    this.replicators = snap.organisms.map((s) => this.organisms.fromSnapshot(s))
+    this.organismFactory.restoreCounter(snap.nextOrganismId)
+    this.organisms = snap.organismSnapshots.map((snap) =>
+      this.organismFactory.fromSnapshot(snap),
+    )
   }
 
   private spawn(): void {
-    if (this.replicators.length >= this.config.populationCap) return
+    if (this.organisms.length >= this.config.populationCap) return
     if (this.rng.next() < this.config.spawnRate) {
       const x = this.rng.next() * this.config.width
       const y = this.rng.next() * this.config.height
       const heading = this.rng.next() * Math.PI * 2
-      this.replicators.push(
-        this.organisms.create(x, y, this.config.defaultStats, heading),
+      this.organisms.push(
+        this.organismFactory.create(x, y, this.config.defaultStats, heading),
       )
     }
   }
 
   private replicateAndMutate(): void {
     const offspring: Organism[] = []
-    for (const parent of this.replicators) {
-      if (
-        this.replicators.length + offspring.length >=
-        this.config.populationCap
-      )
+    for (const parent of this.organisms) {
+      if (this.organisms.length + offspring.length >= this.config.populationCap)
         break
       if (this.rng.next() < parent.stats.replicationRate) {
         // Position RNG calls must happen before replicate() to preserve sequence
@@ -145,7 +147,7 @@ export class Simulation {
           this.config.height
 
         // replicate() consumes: rng.next() for isMutation, then 8× if mutating
-        const child = this.organisms.replicate(parent, this.rng)
+        const child = this.organismFactory.replicate(parent, this.rng)
 
         // Heading RNG call stays after replicate() to preserve sequence
         const heading = this.rng.next() * Math.PI * 2
@@ -155,17 +157,17 @@ export class Simulation {
         offspring.push(child)
       }
     }
-    this.replicators.push(...offspring)
+    this.organisms.push(...offspring)
   }
 
   private kill(): void {
-    this.replicators = this.replicators.filter(
+    this.organisms = this.organisms.filter(
       (r) => this.rng.next() >= r.stats.deathRate,
     )
   }
 
   private move(): void {
-    for (const r of this.replicators) {
+    for (const r of this.organisms) {
       // Drift heading
       r.heading += (this.rng.next() - 0.5) * HEADING_DRIFT * 2
       // Move

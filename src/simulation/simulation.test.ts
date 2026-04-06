@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { Simulation } from './simulation'
-import { DEFAULT_CONFIG } from '../config'
+import { DEFAULT_SIM_CONFIG } from './config'
 
 describe('Simulation', () => {
   describe('regression - snapshot tests', () => {
-    const config = { ...DEFAULT_CONFIG, seed: 1000 }
+    const config = { ...DEFAULT_SIM_CONFIG, seed: 1000 }
 
     it.each([0, 100, 1000, 10_000])(
       'it matches snapshot for %i ticks with default config',

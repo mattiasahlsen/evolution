@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "verify": "pnpm build:check && pnpm test",
     "dev": "vite",
     "build": "tsc && vite build",
     "build:check": "tsc --noEmit",

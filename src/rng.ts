@@ -1,4 +1,8 @@
-export class Mulberry32 {
+export interface RNG {
+  next(): number
+}
+
+export class Mulberry32 implements RNG {
   private _state: number
 
   constructor(seed: number) {

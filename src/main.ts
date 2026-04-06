@@ -2,10 +2,10 @@ import './style.css'
 import { Simulation } from './simulation/simulation'
 import { Renderer } from './renderer'
 import { UI } from './ui'
-import { DEFAULT_CONFIG } from './config'
-import type { SimConfig } from './config'
+import { DEFAULT_SIM_CONFIG } from './simulation/config'
+import type { SimConfig } from './simulation/config'
 
-const config: SimConfig = { ...DEFAULT_CONFIG }
+const config: SimConfig = { ...DEFAULT_SIM_CONFIG }
 
 const app = document.getElementById('app')!
 
