@@ -7,6 +7,7 @@ export interface UICallbacks {
   onStep: () => void;
   onReset: () => void;
   onConfigChange: (config: Partial<SimConfig>) => void;
+  onScrub: (tick: number) => void;
 }
 
 export class UI {
@@ -15,6 +16,10 @@ export class UI {
   private tickCounter: HTMLElement;
   private tooltip: HTMLElement;
   private callbacks: UICallbacks;
+  private configSliders: HTMLInputElement[] = [];
+  private scrubBar!: HTMLInputElement;
+  private scrubLabel!: HTMLElement;
+  private isScrubbing = false;
 
   constructor(container: HTMLElement, config: SimConfig, callbacks: UICallbacks) {
     this.callbacks = callbacks;
@@ -66,47 +71,93 @@ export class UI {
     playbackDiv.appendChild(btnRow);
     this.panel.appendChild(playbackDiv);
 
-    // Simulation params
-    this.addSlider('Spawn Rate', config.spawnRate, 0, 1, 0.01, (v) => {
-      this.callbacks.onConfigChange({ spawnRate: v });
+    // Timeline scrub bar
+    const scrubGroup = document.createElement('div');
+    scrubGroup.className = 'control-group';
+
+    const scrubLabelEl = document.createElement('label');
+    scrubLabelEl.textContent = 'Timeline ';
+    this.scrubLabel = document.createElement('span');
+    this.scrubLabel.className = 'slider-value';
+    this.scrubLabel.textContent = '0';
+    scrubLabelEl.appendChild(this.scrubLabel);
+
+    this.scrubBar = document.createElement('input');
+    this.scrubBar.type = 'range';
+    this.scrubBar.min = '0';
+    this.scrubBar.max = '0';
+    this.scrubBar.step = '1';
+    this.scrubBar.value = '0';
+
+    this.scrubBar.addEventListener('input', () => {
+      this.isScrubbing = true;
+      const tick = parseInt(this.scrubBar.value, 10);
+      this.scrubLabel.textContent = String(tick);
+      this.callbacks.onScrub(tick);
     });
 
-    this.addSlider('Population Cap', config.populationCap, 100, 5000, 100, (v) => {
-      this.callbacks.onConfigChange({ populationCap: v });
+    this.scrubBar.addEventListener('change', () => {
+      this.isScrubbing = false;
     });
 
-    this.addSlider('Speed (ticks/frame)', config.ticksPerFrame, 1, 10, 1, (v) => {
+    scrubGroup.appendChild(scrubLabelEl);
+    scrubGroup.appendChild(this.scrubBar);
+    this.panel.appendChild(scrubGroup);
+
+    // Speed (playback control, not locked)
+    this.addSlider('Speed', config.ticksPerFrame, 0.1, 10, 0.1, (v) => {
       this.callbacks.onConfigChange({ ticksPerFrame: v });
     });
+
+    // Simulation params (locked on play)
+    this.configSliders.push(
+      this.addSlider('Spawn Rate', config.spawnRate, 0, 1, 0.01, (v) => {
+        this.callbacks.onConfigChange({ spawnRate: v });
+      }),
+    );
+
+    this.configSliders.push(
+      this.addSlider('Population Cap', config.populationCap, 100, 5000, 100, (v) => {
+        this.callbacks.onConfigChange({ populationCap: v });
+      }),
+    );
 
     // Default replicator stats
     const statsHeader = document.createElement('h3');
     statsHeader.textContent = 'Default Stats';
     this.panel.appendChild(statsHeader);
 
-    this.addSlider('Replication Rate', config.defaultStats.replicationRate, 0, 1, 0.005, (v) => {
-      this.callbacks.onConfigChange({
-        defaultStats: { ...config.defaultStats, replicationRate: v },
-      });
-    });
+    this.configSliders.push(
+      this.addSlider('Replication Rate', config.defaultStats.replicationRate, 0, 1, 0.005, (v) => {
+        this.callbacks.onConfigChange({
+          defaultStats: { ...config.defaultStats, replicationRate: v },
+        });
+      }),
+    );
 
-    this.addSlider('Death Rate', config.defaultStats.deathRate, 0, 1, 0.005, (v) => {
-      this.callbacks.onConfigChange({
-        defaultStats: { ...config.defaultStats, deathRate: v },
-      });
-    });
+    this.configSliders.push(
+      this.addSlider('Death Rate', config.defaultStats.deathRate, 0, 1, 0.005, (v) => {
+        this.callbacks.onConfigChange({
+          defaultStats: { ...config.defaultStats, deathRate: v },
+        });
+      }),
+    );
 
-    this.addSlider('Mutation Rate', config.defaultStats.mutationRate, 0, 1, 0.01, (v) => {
-      this.callbacks.onConfigChange({
-        defaultStats: { ...config.defaultStats, mutationRate: v },
-      });
-    });
+    this.configSliders.push(
+      this.addSlider('Mutation Rate', config.defaultStats.mutationRate, 0, 1, 0.01, (v) => {
+        this.callbacks.onConfigChange({
+          defaultStats: { ...config.defaultStats, mutationRate: v },
+        });
+      }),
+    );
 
-    this.addSlider('Movement Speed', config.defaultStats.speed, 0, 5, 0.1, (v) => {
-      this.callbacks.onConfigChange({
-        defaultStats: { ...config.defaultStats, speed: v },
-      });
-    });
+    this.configSliders.push(
+      this.addSlider('Movement Speed', config.defaultStats.speed, 0, 5, 0.1, (v) => {
+        this.callbacks.onConfigChange({
+          defaultStats: { ...config.defaultStats, speed: v },
+        });
+      }),
+    );
   }
 
   private addSlider(
@@ -116,7 +167,7 @@ export class UI {
     max: number,
     step: number,
     onChange: (v: number) => void,
-  ): void {
+  ): HTMLInputElement {
     const group = document.createElement('div');
     group.className = 'control-group';
 
@@ -143,6 +194,8 @@ export class UI {
     group.appendChild(labelEl);
     group.appendChild(slider);
     this.panel.appendChild(group);
+
+    return slider;
   }
 
   private makeButton(text: string, onClick: () => void): HTMLButtonElement {
@@ -150,6 +203,26 @@ export class UI {
     btn.textContent = text;
     btn.addEventListener('click', onClick);
     return btn;
+  }
+
+  lockConfig(): void {
+    for (const slider of this.configSliders) {
+      slider.disabled = true;
+    }
+  }
+
+  unlockConfig(): void {
+    for (const slider of this.configSliders) {
+      slider.disabled = false;
+    }
+  }
+
+  updateScrubBar(currentTick: number, frontierTick: number): void {
+    this.scrubBar.max = String(frontierTick);
+    if (!this.isScrubbing) {
+      this.scrubBar.value = String(currentTick);
+      this.scrubLabel.textContent = String(currentTick);
+    }
   }
 
   updateStats(population: number, tick: number): void {

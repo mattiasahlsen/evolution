@@ -26,28 +26,63 @@ function resizeCanvas(): void {
 }
 
 // UI
-let running = true;
+let running = false;
+let tickAccumulator = 0;
+let frontierTick = 0;
 
 const ui = new UI(app, config, {
   onPlay: () => {
+    // Restore frontier if we scrubbed backward
+    if (simulation.tickCount < frontierTick) {
+      simulation.seekToTick(frontierTick);
+    }
+    // Store initial checkpoint on first play
+    if (simulation.tickCount === 0) {
+      simulation.storeInitialCheckpoint();
+    }
     running = true;
+    tickAccumulator = 0;
+    ui.lockConfig();
   },
   onPause: () => {
     running = false;
   },
   onStep: () => {
     running = false;
+    tickAccumulator = 0;
+    // Restore frontier if we scrubbed backward
+    if (simulation.tickCount < frontierTick) {
+      simulation.seekToTick(frontierTick);
+    }
+    // Store initial checkpoint on first step
+    if (simulation.tickCount === 0 && !simulation.hasCheckpoint(0)) {
+      simulation.storeInitialCheckpoint();
+    }
+    ui.lockConfig();
     simulation.tick();
+    frontierTick = simulation.tickCount;
     renderer.render(simulation.replicators);
     ui.updateStats(simulation.replicators.length, simulation.tickCount);
+    ui.updateScrubBar(simulation.tickCount, frontierTick);
   },
   onReset: () => {
+    running = false;
+    tickAccumulator = 0;
+    frontierTick = 0;
     simulation.reset();
     renderer.render(simulation.replicators);
     ui.updateStats(0, 0);
+    ui.updateScrubBar(0, 0);
+    ui.unlockConfig();
   },
   onConfigChange: (partial) => {
     Object.assign(config, partial);
+  },
+  onScrub: (tick: number) => {
+    running = false;
+    simulation.seekToTick(tick);
+    renderer.render(simulation.replicators);
+    ui.updateStats(simulation.replicators.length, simulation.tickCount);
   },
 });
 
@@ -72,14 +107,22 @@ canvas.addEventListener('click', (e) => {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
+// Initial render
+renderer.render(simulation.replicators);
+
 // Main loop
 function loop(): void {
   if (running) {
-    for (let i = 0; i < config.ticksPerFrame; i++) {
+    tickAccumulator += config.ticksPerFrame;
+    const wholeTicks = Math.floor(tickAccumulator);
+    tickAccumulator -= wholeTicks;
+    for (let i = 0; i < wholeTicks; i++) {
       simulation.tick();
     }
+    frontierTick = simulation.tickCount;
     renderer.render(simulation.replicators);
     ui.updateStats(simulation.replicators.length, simulation.tickCount);
+    ui.updateScrubBar(simulation.tickCount, frontierTick);
   }
   requestAnimationFrame(loop);
 }

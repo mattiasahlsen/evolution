@@ -69,6 +69,11 @@ body {
   accent-color: #6060cc;
 }
 
+.control-group input[type='range']:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 .btn-row {
   display: flex;
   gap: 4px;
