@@ -1,6 +1,6 @@
-import type { SimConfig } from './simulation/config'
-import { statsToColor } from './organism/stats'
-import type { Organism } from './organism/organism'
+import type { SimConfig } from '../simulation/config'
+import { statsToColor } from '../organism/stats'
+import type { Organism } from '../organism/organism'
 
 export interface UICallbacks {
   onPlay: () => void

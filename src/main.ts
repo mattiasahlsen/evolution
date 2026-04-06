@@ -1,7 +1,7 @@
 import './style.css'
 import { Simulation } from './simulation/simulation'
-import { Renderer } from './renderer'
-import { UI } from './ui'
+import { Renderer } from './renderer/renderer'
+import { UI } from './ui/ui'
 import { DEFAULT_SIM_CONFIG } from './simulation/config'
 import type { SimConfig } from './simulation/config'
 

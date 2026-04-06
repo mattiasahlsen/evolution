@@ -1,6 +1,6 @@
-import type { Organism } from './organism/organism'
-import { statsToColor } from './organism/stats'
-import { getSpriteForColor, SPRITE_SIZE } from './sprite'
+import type { Organism } from '../organism/organism'
+import { statsToColor } from '../organism/stats'
+import { getSpriteForColor, SPRITE_SIZE } from '../sprite'
 
 export class Renderer {
   private canvas: HTMLCanvasElement
