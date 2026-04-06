@@ -1,0 +1,1 @@
+- Run `pnpm verify` to check tsc build and run tests
