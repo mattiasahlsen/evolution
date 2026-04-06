@@ -33,11 +33,11 @@ let frontierTick = 0
 const ui = new UI(app, config, {
   onPlay: () => {
     // Restore frontier if we scrubbed backward
-    if (simulation.tickCount < frontierTick) {
+    if (simulation.getTickCount() < frontierTick) {
       simulation.seekToTick(frontierTick)
     }
     // Store initial checkpoint on first play
-    if (simulation.tickCount === 0) {
+    if (simulation.getTickCount() === 0) {
       simulation.storeInitialCheckpoint()
     }
     running = true
@@ -51,26 +51,29 @@ const ui = new UI(app, config, {
     running = false
     tickAccumulator = 0
     // Restore frontier if we scrubbed backward
-    if (simulation.tickCount < frontierTick) {
+    if (simulation.getTickCount() < frontierTick) {
       simulation.seekToTick(frontierTick)
     }
     // Store initial checkpoint on first step
-    if (simulation.tickCount === 0 && !simulation.hasCheckpoint(0)) {
+    if (simulation.getTickCount() === 0 && !simulation.hasCheckpoint(0)) {
       simulation.storeInitialCheckpoint()
     }
     ui.lockConfig()
     simulation.tick()
-    frontierTick = simulation.tickCount
-    renderer.render(simulation.replicators)
-    ui.updateStats(simulation.replicators.length, simulation.tickCount)
-    ui.updateScrubBar(simulation.tickCount, frontierTick)
+    frontierTick = simulation.getTickCount()
+    renderer.render(simulation.getReplicators())
+    ui.updateStats(
+      simulation.getReplicators().length,
+      simulation.getTickCount(),
+    )
+    ui.updateScrubBar(simulation.getTickCount(), frontierTick)
   },
   onReset: () => {
     running = false
     tickAccumulator = 0
     frontierTick = 0
     simulation.reset()
-    renderer.render(simulation.replicators)
+    renderer.render(simulation.getReplicators())
     ui.updateStats(0, 0)
     ui.updateScrubBar(0, 0)
     ui.unlockConfig()
@@ -81,8 +84,11 @@ const ui = new UI(app, config, {
   onScrub: (tick: number) => {
     running = false
     simulation.seekToTick(tick)
-    renderer.render(simulation.replicators)
-    ui.updateStats(simulation.replicators.length, simulation.tickCount)
+    renderer.render(simulation.getReplicators())
+    ui.updateStats(
+      simulation.getReplicators().length,
+      simulation.getTickCount(),
+    )
   },
 })
 
@@ -95,7 +101,7 @@ canvas.addEventListener('click', (e) => {
   const rect = canvas.getBoundingClientRect()
   const x = e.clientX - rect.left
   const y = e.clientY - rect.top
-  const found = renderer.findReplicatorAt(x, y, simulation.replicators)
+  const found = renderer.findReplicatorAt(x, y, simulation.getReplicators())
   if (found) {
     ui.showTooltip(found, e.clientX, e.clientY)
   } else {
@@ -108,7 +114,7 @@ window.addEventListener('resize', resizeCanvas)
 resizeCanvas()
 
 // Initial render
-renderer.render(simulation.replicators)
+renderer.render(simulation.getReplicators())
 
 // Main loop
 function loop(): void {
@@ -119,10 +125,13 @@ function loop(): void {
     for (let i = 0; i < wholeTicks; i++) {
       simulation.tick()
     }
-    frontierTick = simulation.tickCount
-    renderer.render(simulation.replicators)
-    ui.updateStats(simulation.replicators.length, simulation.tickCount)
-    ui.updateScrubBar(simulation.tickCount, frontierTick)
+    frontierTick = simulation.getTickCount()
+    renderer.render(simulation.getReplicators())
+    ui.updateStats(
+      simulation.getReplicators().length,
+      simulation.getTickCount(),
+    )
+    ui.updateScrubBar(simulation.getTickCount(), frontierTick)
   }
   requestAnimationFrame(loop)
 }

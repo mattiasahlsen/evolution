@@ -14,11 +14,12 @@ interface SimulationSnapshot {
 }
 
 export class Simulation {
-  replicators: Organism[] = []
-  config: SimConfig
-  tickCount = 0
-  seed: number
-  rng: Mulberry32
+  private readonly config: SimConfig
+
+  private replicators: Organism[] = []
+  private tickCount = 0
+  private seed: number
+  private rng: Mulberry32
   private organisms = createOrganismFactory()
   private checkpoints = new Map<number, SimulationSnapshot>()
   private readonly checkpointInterval = 60
@@ -37,13 +38,6 @@ export class Simulation {
     }
   }
 
-  private executeTick(): void {
-    this.spawn()
-    this.replicateAndMutate()
-    this.kill()
-    this.move()
-  }
-
   takeSnapshot(): SimulationSnapshot {
     return {
       tickCount: this.tickCount,
@@ -51,13 +45,6 @@ export class Simulation {
       nextOrganismId: this.organisms.saveCounter(),
       organisms: this.replicators.map((r) => this.organisms.toSnapshot(r)),
     }
-  }
-
-  restoreSnapshot(snap: SimulationSnapshot): void {
-    this.tickCount = snap.tickCount
-    this.rng = Mulberry32.fromState(snap.rngState)
-    this.organisms.restoreCounter(snap.nextOrganismId)
-    this.replicators = snap.organisms.map((s) => this.organisms.fromSnapshot(s))
   }
 
   storeInitialCheckpoint(): void {
@@ -100,6 +87,28 @@ export class Simulation {
     this.seed = (Math.random() * 0xffffffff) >>> 0
     this.rng = new Mulberry32(this.seed)
     this.organisms.restoreCounter(0)
+  }
+
+  getReplicators(): Organism[] {
+    return this.replicators
+  }
+
+  getTickCount(): number {
+    return this.tickCount
+  }
+
+  private executeTick(): void {
+    this.spawn()
+    this.replicateAndMutate()
+    this.kill()
+    this.move()
+  }
+
+  private restoreSnapshot(snap: SimulationSnapshot): void {
+    this.tickCount = snap.tickCount
+    this.rng = Mulberry32.fromState(snap.rngState)
+    this.organisms.restoreCounter(snap.nextOrganismId)
+    this.replicators = snap.organisms.map((s) => this.organisms.fromSnapshot(s))
   }
 
   private spawn(): void {
