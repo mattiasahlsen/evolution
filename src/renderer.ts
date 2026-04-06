@@ -26,25 +26,29 @@ export class Renderer {
 
     const half = SPRITE_SIZE / 2
     for (const r of replicators) {
-      const sprite = getSpriteForColor(statsToColor(r.stats))
-      ctx.drawImage(sprite, r.x - half, r.y - half, SPRITE_SIZE, SPRITE_SIZE)
+      const sprite = getSpriteForColor(statsToColor(r.getStats()))
+      const pos = r.getPosition()
+      ctx.drawImage(
+        sprite,
+        pos.x - half,
+        pos.y - half,
+        SPRITE_SIZE,
+        SPRITE_SIZE,
+      )
     }
   }
 
-  findReplicatorAt(
-    x: number,
-    y: number,
-    replicators: Organism[],
-  ): Organism | null {
+  findOrganismAt(x: number, y: number, organisms: Organism[]): Organism | null {
     const half = SPRITE_SIZE / 2
     // Search in reverse so topmost (last drawn) is found first
-    for (let i = replicators.length - 1; i >= 0; i--) {
-      const r = replicators[i]
+    for (let i = organisms.length - 1; i >= 0; i--) {
+      const r = organisms[i]
+      const pos = r.getPosition()
       if (
-        x >= r.x - half &&
-        x <= r.x + half &&
-        y >= r.y - half &&
-        y <= r.y + half
+        x >= pos.x - half &&
+        x <= pos.x + half &&
+        y >= pos.y - half &&
+        y <= pos.y + half
       ) {
         return r
       }

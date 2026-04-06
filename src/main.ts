@@ -101,7 +101,7 @@ canvas.addEventListener('click', (e) => {
   const rect = canvas.getBoundingClientRect()
   const x = e.clientX - rect.left
   const y = e.clientY - rect.top
-  const found = renderer.findReplicatorAt(x, y, simulation.getReplicators())
+  const found = renderer.findOrganismAt(x, y, simulation.getReplicators())
   if (found) {
     ui.showTooltip(found, e.clientX, e.clientY)
   } else {

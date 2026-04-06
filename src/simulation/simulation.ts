@@ -133,12 +133,12 @@ export class Simulation {
     for (const parent of this.organisms) {
       if (this.organisms.length + offspring.length >= this.config.populationCap)
         break
-      if (this.rng.next() < parent.stats.replicationRate) {
+      if (this.rng.next() < parent.getStats().replicationRate) {
         // Position RNG calls must happen before replicate() to preserve sequence
         const angle = this.rng.next() * Math.PI * 2
         const dist = SPAWN_OFFSET + this.rng.next() * SPAWN_OFFSET
-        let childX = parent.x + Math.cos(angle) * dist
-        let childY = parent.y + Math.sin(angle) * dist
+        let childX = parent.getPosition().x + Math.cos(angle) * dist
+        let childY = parent.getPosition().y + Math.sin(angle) * dist
         // Toroidal wrap
         childX =
           ((childX % this.config.width) + this.config.width) % this.config.width
@@ -151,9 +151,8 @@ export class Simulation {
 
         // Heading RNG call stays after replicate() to preserve sequence
         const heading = this.rng.next() * Math.PI * 2
-        child.x = childX
-        child.y = childY
-        child.heading = heading
+        child.setPosition({ x: childX, y: childY })
+        child.setHeading(heading)
         offspring.push(child)
       }
     }
@@ -162,21 +161,38 @@ export class Simulation {
 
   private kill(): void {
     this.organisms = this.organisms.filter(
-      (r) => this.rng.next() >= r.stats.deathRate,
+      (r) => this.rng.next() >= r.getStats().deathRate,
     )
   }
 
   private move(): void {
-    for (const r of this.organisms) {
+    for (const organism of this.organisms) {
       // Drift heading
-      r.heading += (this.rng.next() - 0.5) * HEADING_DRIFT * 2
+      const currentHeading = organism.getHeading()
+      organism.setHeading(
+        currentHeading + (this.rng.next() - 0.5) * HEADING_DRIFT * 2,
+      )
       // Move
-      r.x += Math.cos(r.heading) * r.stats.speed
-      r.y += Math.sin(r.heading) * r.stats.speed
+      const pos = organism.getPosition()
+      const newXRaw =
+        pos.x + Math.cos(organism.getHeading()) * organism.getStats().speed
+      const newYRaw =
+        pos.y + Math.sin(organism.getHeading()) * organism.getStats().speed
+
+      organism.setPosition({
+        x:
+          ((newXRaw % this.config.width) + this.config.width) %
+          this.config.width,
+        y:
+          ((newYRaw % this.config.height) + this.config.height) %
+          this.config.height,
+      })
+      // organism.x += Math.cos(organism.heading) * organism.stats.speed
+      // organism.y += Math.sin(organism.heading) * organism.stats.speed
       // Toroidal wrap
-      r.x = ((r.x % this.config.width) + this.config.width) % this.config.width
-      r.y =
-        ((r.y % this.config.height) + this.config.height) % this.config.height
+      // organism.x = ((organism.x % this.config.width) + this.config.width) % this.config.width
+      // organism.y =
+      //   ((organism.y % this.config.height) + this.config.height) % this.config.height
     }
   }
 }

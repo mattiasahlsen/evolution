@@ -274,13 +274,14 @@ export class UI {
     this.tooltip.style.display = 'block'
     this.tooltip.style.left = `${screenX + 15}px`
     this.tooltip.style.top = `${screenY + 15}px`
+    const stats = r.getStats()
     this.tooltip.innerHTML = `
-      <strong>Replicator #${r.id}</strong><br>
-      Replication: ${r.stats.replicationRate.toFixed(4)}<br>
-      Death: ${r.stats.deathRate.toFixed(4)}<br>
-      Mutation: ${r.stats.mutationRate.toFixed(4)}<br>
-      Speed: ${r.stats.speed.toFixed(2)}<br>
-      Color: <span style="color:${statsToColor(r.stats)}">&#9679;</span> ${statsToColor(r.stats)}
+      <strong>Replicator #${r.getId()}</strong><br>
+      Replication: ${stats.replicationRate.toFixed(4)}<br>
+      Death: ${stats.deathRate.toFixed(4)}<br>
+      Mutation: ${stats.mutationRate.toFixed(4)}<br>
+      Speed: ${stats.speed.toFixed(2)}<br>
+      Color: <span style="color:${statsToColor(stats)}">&#9679;</span> ${statsToColor(stats)}
     `
   }
 

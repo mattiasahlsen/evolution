@@ -68,8 +68,8 @@ describe('createOrganismFactory', () => {
     const org1 = factory.create(10, 20, stats, 0)
     const org2 = factory.create(30, 40, stats, Math.PI)
 
-    expect(org1.id).toBe(0)
-    expect(org2.id).toBe(1)
+    expect(org1.getId()).toBe(0)
+    expect(org2.getId()).toBe(1)
   })
 
   it('should create organism with correct position and heading', () => {
@@ -83,9 +83,10 @@ describe('createOrganismFactory', () => {
 
     const org = factory.create(100, 200, stats, Math.PI / 2)
 
-    expect(org.x).toBe(100)
-    expect(org.y).toBe(200)
-    expect(org.heading).toBe(Math.PI / 2)
+    const { x, y } = org.getPosition()
+    expect(x).toBe(100)
+    expect(y).toBe(200)
+    expect(org.getHeading()).toBe(Math.PI / 2)
   })
 
   it('should copy stats on creation', () => {
@@ -100,7 +101,7 @@ describe('createOrganismFactory', () => {
     const org = factory.create(0, 0, stats, 0)
     stats.replicationRate = 0.5
 
-    expect(org.stats.replicationRate).toBe(0.1)
+    expect(org.getStats().replicationRate).toBe(0.1)
   })
 
   it('should replicate without mutation when rng is high', () => {
@@ -123,14 +124,16 @@ describe('createOrganismFactory', () => {
 
     const child = factory.replicate(parent, rng)
 
-    expect(child.id).toBe(1)
-    expect(child.x).toBe(parent.x)
-    expect(child.y).toBe(parent.y)
-    expect(child.heading).toBe(parent.heading)
-    expect(child.stats.replicationRate).toBe(parent.stats.replicationRate)
-    expect(child.stats.deathRate).toBe(parent.stats.deathRate)
-    expect(child.stats.mutationRate).toBe(parent.stats.mutationRate)
-    expect(child.stats.speed).toBe(parent.stats.speed)
+    expect(child.getId()).toBe(1)
+    expect(child.getPosition().x).toBe(parent.getPosition().x)
+    expect(child.getPosition().y).toBe(parent.getPosition().y)
+    expect(child.getHeading()).toBe(parent.getHeading())
+    expect(child.getStats().replicationRate).toBe(
+      parent.getStats().replicationRate,
+    )
+    expect(child.getStats().deathRate).toBe(parent.getStats().deathRate)
+    expect(child.getStats().mutationRate).toBe(parent.getStats().mutationRate)
+    expect(child.getStats().speed).toBe(parent.getStats().speed)
   })
 
   it('should replicate with mutation when rng is low', () => {
@@ -154,10 +157,10 @@ describe('createOrganismFactory', () => {
 
     const child = factory.replicate(parent, rng)
 
-    expect(child.id).toBe(1)
-    expect(child.x).toBe(parent.x)
-    expect(child.y).toBe(parent.y)
-    expect(child.heading).toBe(parent.heading)
+    expect(child.getId()).toBe(1)
+    expect(child.getPosition().x).toBe(parent.getPosition().x)
+    expect(child.getPosition().y).toBe(parent.getPosition().y)
+    expect(child.getHeading()).toBe(parent.getHeading())
     // Stats should be different due to mutation (with very high probability given gaussian)
     // At least some should change
   })
@@ -183,14 +186,14 @@ describe('createOrganismFactory', () => {
     let current = parent
     for (let i = 0; i < 50; i++) {
       current = factory.replicate(current, rng)
-      expect(current.stats.replicationRate).toBeGreaterThanOrEqual(0)
-      expect(current.stats.replicationRate).toBeLessThanOrEqual(1)
-      expect(current.stats.deathRate).toBeGreaterThanOrEqual(0)
-      expect(current.stats.deathRate).toBeLessThanOrEqual(1)
-      expect(current.stats.mutationRate).toBeGreaterThanOrEqual(0)
-      expect(current.stats.mutationRate).toBeLessThanOrEqual(1)
-      expect(current.stats.speed).toBeGreaterThanOrEqual(0)
-      expect(current.stats.speed).toBeLessThanOrEqual(5)
+      expect(current.getStats().replicationRate).toBeGreaterThanOrEqual(0)
+      expect(current.getStats().replicationRate).toBeLessThanOrEqual(1)
+      expect(current.getStats().deathRate).toBeGreaterThanOrEqual(0)
+      expect(current.getStats().deathRate).toBeLessThanOrEqual(1)
+      expect(current.getStats().mutationRate).toBeGreaterThanOrEqual(0)
+      expect(current.getStats().mutationRate).toBeLessThanOrEqual(1)
+      expect(current.getStats().speed).toBeGreaterThanOrEqual(0)
+      expect(current.getStats().speed).toBeLessThanOrEqual(5)
     }
   })
 
@@ -207,11 +210,11 @@ describe('createOrganismFactory', () => {
     const snapshot = original.toSnapshot()
     const restored = factory.fromSnapshot(snapshot)
 
-    expect(restored.id).toBe(original.id)
-    expect(restored.x).toBe(original.x)
-    expect(restored.y).toBe(original.y)
-    expect(restored.heading).toBe(original.heading)
-    expect(restored.stats).toEqual(original.stats)
+    expect(restored.getId()).toBe(original.getId())
+    expect(restored.getPosition().x).toBe(original.getPosition().x)
+    expect(restored.getPosition().y).toBe(original.getPosition().y)
+    expect(restored.getHeading()).toBe(original.getHeading())
+    expect(restored.getStats()).toEqual(original.getStats())
   })
 
   it('should handle counter save and restore', () => {
@@ -231,11 +234,11 @@ describe('createOrganismFactory', () => {
     expect(counter).toBe(3)
 
     const org = factory.create(0, 0, stats, 0)
-    expect(org.id).toBe(3)
+    expect(org.getId()).toBe(3)
 
     factory.restoreCounter(1)
     const orgAfterRestore = factory.create(0, 0, stats, 0)
-    expect(orgAfterRestore.id).toBe(1)
+    expect(orgAfterRestore.getId()).toBe(1)
   })
 
   it('should respect custom configuration', () => {
@@ -256,6 +259,6 @@ describe('createOrganismFactory', () => {
     }
 
     const child = factory.replicate(parent, rng)
-    expect(child.stats).toBeDefined()
+    expect(child.getStats()).toBeDefined()
   })
 })

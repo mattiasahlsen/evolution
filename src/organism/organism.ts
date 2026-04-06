@@ -5,11 +5,15 @@ import type { OrganismSnapshot } from './snapshot'
 import type { Stats } from './stats'
 
 export interface Organism {
-  readonly id: number
-  x: number
-  y: number
-  heading: number
-  readonly stats: Stats
+  readonly getId: () => number
+
+  getPosition: () => { x: number; y: number }
+  setPosition: (position: { x: number; y: number }) => void
+
+  getHeading: () => number
+  setHeading: (heading: number) => void
+
+  getStats: () => Stats
 
   replicate(options: {
     id: number
@@ -22,11 +26,11 @@ export interface Organism {
 }
 
 export class BaseOrganism implements Organism {
-  public readonly id: number
-  public x: number
-  public y: number
-  public heading: number
-  public readonly stats: Stats
+  private readonly id: number
+  private x: number
+  private y: number
+  private heading: number
+  private readonly stats: Stats
 
   constructor(options: {
     id: number
@@ -40,6 +44,29 @@ export class BaseOrganism implements Organism {
     this.y = options.y
     this.heading = options.heading
     this.stats = options.stats
+  }
+
+  getId() {
+    return this.id
+  }
+
+  getPosition() {
+    return { x: this.x, y: this.y }
+  }
+  setPosition(position: { x: number; y: number }) {
+    this.x = position.x
+    this.y = position.y
+  }
+
+  getHeading() {
+    return this.heading
+  }
+  setHeading(heading: number) {
+    this.heading = heading
+  }
+
+  getStats() {
+    return this.stats
   }
 
   replicate({
