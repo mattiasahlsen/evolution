@@ -112,9 +112,8 @@ export class Simulation {
       const x = this.rng.next() * this.config.width;
       const y = this.rng.next() * this.config.height;
       const heading = this.rng.next() * Math.PI * 2;
-      const hue = parseBaseHue(this.config.baseColor);
       this.replicators.push(
-        new Replicator(x, y, this.config.defaultStats, hue, 70, 50, heading),
+        new Replicator(x, y, this.config.defaultStats, heading),
       );
     }
   }
@@ -134,9 +133,6 @@ export class Simulation {
         childY = ((childY % this.config.height) + this.config.height) % this.config.height;
 
         let childStats = { ...parent.stats };
-        let hue = parent.hue;
-        let sat = parent.saturation;
-        let lit = parent.lightness;
 
         if (isMutation) {
           childStats = {
@@ -145,13 +141,10 @@ export class Simulation {
             mutationRate: clamp(parent.stats.mutationRate + gaussianRandom(this.rng) * MUTATION_SIGMA, 0, 1),
             speed: clamp(parent.stats.speed + gaussianRandom(this.rng) * MUTATION_SIGMA * 50, 0, 5),
           };
-          hue = (parent.hue + gaussianRandom(this.rng) * 10 + 360) % 360;
-          sat = clamp(parent.saturation + gaussianRandom(this.rng) * 5, 30, 90);
-          lit = clamp(parent.lightness + gaussianRandom(this.rng) * 5, 30, 70);
         }
 
         const heading = this.rng.next() * Math.PI * 2;
-        offspring.push(new Replicator(childX, childY, childStats, hue, sat, lit, heading));
+        offspring.push(new Replicator(childX, childY, childStats, heading));
       }
     }
     this.replicators.push(...offspring);
@@ -177,7 +170,3 @@ export class Simulation {
   }
 }
 
-function parseBaseHue(hslString: string): number {
-  const match = hslString.match(/hsl\((\d+)/);
-  return match ? parseInt(match[1], 10) : 140;
-}

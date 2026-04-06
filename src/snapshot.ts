@@ -6,9 +6,6 @@ export interface ReplicatorSnapshot {
   y: number
   heading: number
   stats: ReplicatorStats
-  hue: number
-  saturation: number
-  lightness: number
 }
 
 export interface SimulationSnapshot {

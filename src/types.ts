@@ -12,7 +12,6 @@ export interface SimConfig {
   populationCap: number
   ticksPerFrame: number
   defaultStats: ReplicatorStats
-  baseColor: string // HSL hue string for spawned replicators
 }
 
 export const DEFAULT_CONFIG: SimConfig = {
@@ -27,5 +26,4 @@ export const DEFAULT_CONFIG: SimConfig = {
     mutationRate: 0.1,
     speed: 1.0,
   },
-  baseColor: 'hsl(140, 70%, 50%)',
 }

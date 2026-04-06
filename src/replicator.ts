@@ -17,17 +17,11 @@ export class Replicator {
   y: number;
   heading: number; // radians
   stats: ReplicatorStats;
-  hue: number; // 0–360
-  saturation: number;
-  lightness: number;
 
   constructor(
     x: number,
     y: number,
     stats: ReplicatorStats,
-    hue: number,
-    saturation: number = 70,
-    lightness: number = 50,
     heading: number = 0,
   ) {
     this.id = nextId++;
@@ -35,13 +29,13 @@ export class Replicator {
     this.y = y;
     this.heading = heading;
     this.stats = { ...stats };
-    this.hue = hue;
-    this.saturation = saturation;
-    this.lightness = lightness;
   }
 
   get color(): string {
-    return `hsl(${this.hue}, ${this.saturation}%, ${this.lightness}%)`;
+    const r = Math.round(Math.min(this.stats.replicationRate / 0.2, 1) * 255);
+    const g = Math.round(Math.min(this.stats.deathRate / 0.2, 1) * 255);
+    const b = Math.round(Math.min(this.stats.mutationRate / 0.2, 1) * 255);
+    return `rgb(${r},${g},${b})`;
   }
 
   toSnapshot(): ReplicatorSnapshot {
@@ -51,9 +45,6 @@ export class Replicator {
       y: this.y,
       heading: this.heading,
       stats: { ...this.stats },
-      hue: this.hue,
-      saturation: this.saturation,
-      lightness: this.lightness,
     };
   }
 
@@ -64,9 +55,6 @@ export class Replicator {
     r.y = snap.y;
     r.heading = snap.heading;
     r.stats = { ...snap.stats };
-    r.hue = snap.hue;
-    r.saturation = snap.saturation;
-    r.lightness = snap.lightness;
     return r;
   }
 }
