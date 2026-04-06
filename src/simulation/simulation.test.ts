@@ -3,6 +3,26 @@ import { Simulation } from './simulation'
 import { DEFAULT_SIM_CONFIG } from './config'
 import type { SimConfig } from './config'
 
+// Round all floats to 10 significant digits to eliminate sub-ULP differences
+// in Math.log/cos/sqrt across environments without affecting test integrity.
+function roundNumbers(value: unknown, digits: number): unknown {
+  if (typeof value === 'number') {
+    return parseFloat(value.toPrecision(digits))
+  }
+  if (Array.isArray(value)) {
+    return value.map((v) => roundNumbers(v, digits))
+  }
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([k, v]) => [
+        k,
+        roundNumbers(v, digits),
+      ]),
+    )
+  }
+  return value
+}
+
 describe('Simulation', () => {
   describe('regression - snapshot tests', () => {
     const config = { ...DEFAULT_SIM_CONFIG, seed: 1000 }
@@ -14,7 +34,7 @@ describe('Simulation', () => {
         for (let i = 0; i < ticks; i++) {
           simulation.tick()
         }
-        const snapshot = simulation.takeSnapshot()
+        const snapshot = roundNumbers(simulation.takeSnapshot(), 10)
 
         await expect(snapshot).toMatchFileSnapshot(
           `__snapshots__/${ticks}-ticks.json`,
