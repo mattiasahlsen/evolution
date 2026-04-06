@@ -7,12 +7,13 @@ export interface SimConfig {
   populationCap: number
   ticksPerFrame: number
   defaultStats: Stats
+  seed?: number
 }
 
 export const DEFAULT_CONFIG: SimConfig = {
   width: 800,
   height: 600,
-  spawnRate: 0,
+  spawnRate: 0.01,
   populationCap: 2000,
   ticksPerFrame: 1,
   defaultStats: {

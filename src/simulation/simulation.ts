@@ -1,7 +1,7 @@
-import { createOrganismFactory } from './organism'
-import type { Organism, OrganismSnapshot } from './organism'
-import { Mulberry32 } from './rng'
-import type { SimConfig } from './types'
+import { createOrganismFactory } from '../organism'
+import type { Organism, OrganismSnapshot } from '../organism'
+import { Mulberry32 } from '../rng'
+import type { SimConfig } from '../config'
 
 const SPAWN_OFFSET = 15
 const HEADING_DRIFT = 0.3 // max radians per tick
@@ -25,7 +25,7 @@ export class Simulation {
 
   constructor(config: SimConfig) {
     this.config = config
-    this.seed = (Math.random() * 0xffffffff) >>> 0
+    this.seed = config.seed ?? (Math.random() * 0xffffffff) >>> 0
     this.rng = new Mulberry32(this.seed)
   }
 
@@ -117,7 +117,11 @@ export class Simulation {
   private replicateAndMutate(): void {
     const offspring: Organism[] = []
     for (const parent of this.replicators) {
-      if (this.replicators.length + offspring.length >= this.config.populationCap) break
+      if (
+        this.replicators.length + offspring.length >=
+        this.config.populationCap
+      )
+        break
       if (this.rng.next() < parent.stats.replicationRate) {
         // Position RNG calls must happen before replicate() to preserve sequence
         const angle = this.rng.next() * Math.PI * 2
@@ -125,8 +129,11 @@ export class Simulation {
         let childX = parent.x + Math.cos(angle) * dist
         let childY = parent.y + Math.sin(angle) * dist
         // Toroidal wrap
-        childX = ((childX % this.config.width) + this.config.width) % this.config.width
-        childY = ((childY % this.config.height) + this.config.height) % this.config.height
+        childX =
+          ((childX % this.config.width) + this.config.width) % this.config.width
+        childY =
+          ((childY % this.config.height) + this.config.height) %
+          this.config.height
 
         // replicate() consumes: rng.next() for isMutation, then 8× if mutating
         const child = this.organisms.replicate(parent, this.rng)
@@ -157,7 +164,8 @@ export class Simulation {
       r.y += Math.sin(r.heading) * r.stats.speed
       // Toroidal wrap
       r.x = ((r.x % this.config.width) + this.config.width) % this.config.width
-      r.y = ((r.y % this.config.height) + this.config.height) % this.config.height
+      r.y =
+        ((r.y % this.config.height) + this.config.height) % this.config.height
     }
   }
 }
