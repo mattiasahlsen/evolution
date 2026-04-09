@@ -19,7 +19,8 @@ const simulation = new Simulation(config)
 const renderer = new Renderer(canvas)
 
 function resizeCanvas(): void {
-  const panelWidth = 260
+  const isMobile = window.innerWidth < 600
+  const panelWidth = isMobile ? 0 : 260
   config.width = window.innerWidth - panelWidth
   config.height = window.innerHeight
   renderer.resize(config.width, config.height)
@@ -95,6 +96,29 @@ const ui = new UI(app, config, {
 // Move panel before canvas in DOM so it appears on the left
 const panel = app.querySelector('.controls-panel')!
 app.insertBefore(panel, canvas)
+
+// Mobile menu toggle
+const menuToggle = document.createElement('button')
+menuToggle.className = 'menu-toggle'
+menuToggle.textContent = '\u2630'
+menuToggle.setAttribute('aria-label', 'Toggle menu')
+document.body.appendChild(menuToggle)
+
+const backdrop = document.createElement('div')
+backdrop.className = 'panel-backdrop'
+document.body.appendChild(backdrop)
+
+function closePanel(): void {
+  panel.classList.remove('open')
+  backdrop.classList.remove('visible')
+}
+
+menuToggle.addEventListener('click', () => {
+  const isOpen = panel.classList.toggle('open')
+  backdrop.classList.toggle('visible', isOpen)
+})
+
+backdrop.addEventListener('click', closePanel)
 
 // Click to inspect
 canvas.addEventListener('click', (e) => {
